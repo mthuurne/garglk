@@ -426,8 +426,8 @@ void win_textbuffer_redraw(window_t *win)
 
         /* kill spaces at the end unless they're a different color*/
         color = gli_override_bg_set ? gli_window_color : win->bgcolor;
-        while (i > 0 && linelen > 1 && ln->chars[linelen-1] == ' ' 
-            && dwin->styles[ln->attrs[linelen-1].style].bg == color 
+        while (i > 0 && linelen > 1 && ln->chars[linelen-1] == ' '
+            && dwin->styles[ln->attrs[linelen-1].style].bg == color
             && !dwin->styles[ln->attrs[linelen-1].style].reverse)
                 linelen --;
 
@@ -648,7 +648,7 @@ void win_textbuffer_redraw(window_t *win)
             x = x1 - SLOP - w;
 
         color = gli_override_fg_set ? gli_more_color : win->fgcolor;
-        gli_draw_string(x, y + gli_baseline, 
+        gli_draw_string(x, y + gli_baseline,
                 gli_more_font, color,
                 gli_more_prompt, strlen(gli_more_prompt), -1);
         y1 = y; /* don't want pictures overdrawing "[more]" */
@@ -1020,8 +1020,8 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
             dwin->dashed = 0;
     }
 
-    if (gli_conf_spaces && win->attr.style != style_Preformatted 
-        && dwin->styles[win->attr.style].bg == color 
+    if (gli_conf_spaces && win->attr.style != style_Preformatted
+        && dwin->styles[win->attr.style].bg == color
         && !dwin->styles[win->attr.style].reverse)
     {
         /* turn (period space space) into (period space) */
@@ -1063,8 +1063,8 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
 
     /* kill spaces at the end for line width calculation */
     linelen = dwin->numchars;
-    while (linelen > 1 && dwin->chars[linelen-1] == ' ' 
-        && dwin->styles[dwin->attrs[linelen-1].style].bg == color 
+    while (linelen > 1 && dwin->chars[linelen-1] == ' '
+        && dwin->styles[dwin->attrs[linelen-1].style].bg == color
         && !dwin->styles[dwin->attrs[linelen-1].style].reverse)
         linelen --;
 
@@ -1285,7 +1285,7 @@ void win_textbuffer_cancel_line(window_t *win, event_t *ev)
     inarrayrock = dwin->inarrayrock;
 
     len = dwin->numchars - dwin->infence;
-    if (win->echostr) 
+    if (win->echostr)
         gli_stream_echo_line_uni(win->echostr, dwin->chars + dwin->infence, len);
 
     if (len > inmax)
@@ -1453,7 +1453,7 @@ static void acceptline(window_t *win, glui32 keycode)
     inarrayrock = dwin->inarrayrock;
 
     len = dwin->numchars - dwin->infence;
-    if (win->echostr) 
+    if (win->echostr)
         gli_stream_echo_line_uni(win->echostr, dwin->chars+dwin->infence, len);
 
 #ifdef USETTS
@@ -1637,7 +1637,7 @@ void gcmd_buffer_accept_readline(window_t *win, glui32 arg)
             if (dwin->historypos >= HISTORYLEN)
                 dwin->historypos -= HISTORYLEN;
             cx = dwin->history[dwin->historypos];
-            put_text_uni(dwin, cx, cx ? strlen_uni(cx) : 0, dwin->infence, 
+            put_text_uni(dwin, cx, cx ? strlen_uni(cx) : 0, dwin->infence,
                     dwin->numchars - dwin->infence);
             break;
 
