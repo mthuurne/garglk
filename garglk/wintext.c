@@ -175,35 +175,37 @@ static void reflow(window_t *win)
 
     for (k = s; k >= 0; k--)
     {
+        tbline_t *line = &dwin->lines[k];
+
         if (k == 0 && win->line_request)
             inputbyte = p + dwin->infence;
 
-        if (dwin->lines[k].lpic)
+        if (line->lpic)
         {
             offsetbuf[x] = p;
             alignbuf[x] = imagealign_MarginLeft;
-            pictbuf[x] = dwin->lines[k].lpic;
-            hyperbuf[x] = dwin->lines[k].lhyper;
+            pictbuf[x] = line->lpic;
+            hyperbuf[x] = line->lhyper;
             x++;
         }
 
-        if (dwin->lines[k].rpic)
+        if (line->rpic)
         {
             offsetbuf[x] = p;
             alignbuf[x] = imagealign_MarginRight;
-            pictbuf[x] = dwin->lines[k].rpic;
-            hyperbuf[x] = dwin->lines[k].rhyper;
+            pictbuf[x] = line->rpic;
+            hyperbuf[x] = line->rhyper;
             x++;
         }
 
-        for (i = 0; i < dwin->lines[k].len; i++)
+        for (i = 0; i < line->len; i++)
         {
-            attrbuf[p] = curattr = dwin->lines[k].attrs[i];
-            charbuf[p] = dwin->lines[k].chars[i];
+            attrbuf[p] = curattr = line->attrs[i];
+            charbuf[p] = line->chars[i];
             p++;
         }
 
-        if (dwin->lines[k].newline)
+        if (line->newline)
         {
             attrbuf[p] = curattr;
             charbuf[p] = '\n';
@@ -371,6 +373,8 @@ void win_textbuffer_redraw(window_t *win)
 
     for (i = dwin->scrollpos + dwin->height - 1; i >= dwin->scrollpos; i--)
     {
+        tbline_t *line = &dwin->lines[i];
+
         /* top of line */
         y = y0 + (dwin->height - (i - dwin->scrollpos) - 1) * gli_leading;
 
@@ -390,9 +394,9 @@ void win_textbuffer_redraw(window_t *win)
 
         /* mark selected line dirty */
         if (selrow)
-            dwin->lines[i].dirty = TRUE;
+            line->dirty = TRUE;
 
-        memcpy(ln, dwin->lines + i, sizeof(tbline_t));
+        memcpy(ln, line, sizeof(tbline_t));
 
         /* skip if we can */
         if (!ln->dirty && !ln->repaint && !gli_force_redraw && dwin->scrollpos == 0)
@@ -405,12 +409,12 @@ void win_textbuffer_redraw(window_t *win)
         /* keep selected line dirty and flag for repaint */
         if (!selrow)
         {
-            dwin->lines[i].dirty = FALSE;
-            dwin->lines[i].repaint = FALSE;
+            line->dirty = FALSE;
+            line->repaint = FALSE;
         }
         else
         {
-            dwin->lines[i].repaint = TRUE;
+            line->repaint = TRUE;
         }
 
         /* leave bottom line blank for [more] prompt */
@@ -812,29 +816,30 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
 static void put_text(window_textbuffer_t *dwin, char *buf, int len, int pos, int oldlen)
 {
     int diff = len - oldlen;
+    tbline_t *line = &dwin->lines[0];
 
-    if (dwin->lines[0].len + diff >= TBLINELEN)
+    if (line->len + diff >= TBLINELEN)
         return;
 
-    if (diff != 0 && pos + oldlen < dwin->lines[0].len)
+    if (diff != 0 && pos + oldlen < line->len)
     {
-        memmove(dwin->lines[0].chars + pos + len,
-                dwin->lines[0].chars + pos + oldlen,
-                (dwin->lines[0].len - (pos + oldlen)) * 4);
-        memmove(dwin->lines[0].attrs + pos + len,
-                dwin->lines[0].attrs + pos + oldlen,
-                (dwin->lines[0].len - (pos + oldlen)) * sizeof(attr_t));
+        memmove(line->chars + pos + len,
+                line->chars + pos + oldlen,
+                (line->len - (pos + oldlen)) * 4);
+        memmove(line->attrs + pos + len,
+                line->attrs + pos + oldlen,
+                (line->len - (pos + oldlen)) * sizeof(attr_t));
     }
     if (len > 0)
     {
         int i;
         for (i = 0; i < len; i++)
         {
-            dwin->lines[0].chars[pos + i] = buf[i];
-            attrset(&dwin->lines[0].attrs[pos + i], style_Input);
+            line->chars[pos + i] = buf[i];
+            attrset(&line->attrs[pos + i], style_Input);
         }
     }
-    dwin->lines[0].len += diff;
+    line->len += diff;
 
     if (dwin->inbuf)
     {
@@ -850,27 +855,28 @@ static void put_text(window_textbuffer_t *dwin, char *buf, int len, int pos, int
 static void put_text_uni(window_textbuffer_t *dwin, glui32 *buf, int len, int pos, int oldlen)
 {
     int diff = len - oldlen;
+    tbline_t *line = &dwin->lines[0];
 
-    if (dwin->lines[0].len + diff >= TBLINELEN)
+    if (line->len + diff >= TBLINELEN)
         return;
 
-    if (diff != 0 && pos + oldlen < dwin->lines[0].len)
+    if (diff != 0 && pos + oldlen < line->len)
     {
-        memmove(dwin->lines[0].chars + pos + len,
-                dwin->lines[0].chars + pos + oldlen,
-                (dwin->lines[0].len - (pos + oldlen)) * 4);
-        memmove(dwin->lines[0].attrs + pos + len,
-                dwin->lines[0].attrs + pos + oldlen,
-                (dwin->lines[0].len - (pos + oldlen)) * sizeof(attr_t));
+        memmove(line->chars + pos + len,
+                line->chars + pos + oldlen,
+                (line->len - (pos + oldlen)) * 4);
+        memmove(line->attrs + pos + len,
+                line->attrs + pos + oldlen,
+                (line->len - (pos + oldlen)) * sizeof(attr_t));
     }
     if (len > 0)
     {
         int i;
-        memmove(dwin->lines[0].chars + pos, buf, len * 4);
+        memmove(line->chars + pos, buf, len * 4);
         for (i = 0; i < len; i++)
-            attrset(&dwin->lines[0].attrs[pos+i], style_Input);
+            attrset(&line->attrs[pos+i], style_Input);
     }
-    dwin->lines[0].len += diff;
+    line->len += diff;
 
     if (dwin->inbuf)
     {
@@ -886,6 +892,7 @@ static void put_text_uni(window_textbuffer_t *dwin, glui32 *buf, int len, int po
 void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
 {
     window_textbuffer_t *dwin = win->data;
+    tbline_t *line = &dwin->lines[0];
     glui32 bchars[TBLINELEN];
     attr_t battrs[TBLINELEN];
     int pw;
@@ -905,8 +912,11 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
     color = gli_override_bg_set ? gli_window_color : win->bgcolor;
 
     /* oops ... overflow */
-    if (dwin->lines[0].len + 1 >= TBLINELEN)
+    if (line->len + 1 >= TBLINELEN)
+    {
         scrolloneline(dwin, 0);
+        line = &dwin->lines[0];
+    }
 
     if (ch == '\n')
     {
@@ -920,7 +930,7 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
         /* fails for 'tis a wonderful day in the '80s */
         if (gli_conf_quotes > 1 && ch == '\'')
         {
-            if (dwin->lines[0].len == 0 || LEFTQUOTE(dwin->lines[0].chars[dwin->lines[0].len-1]))
+            if (line->len == 0 || LEFTQUOTE(line->chars[line->len-1]))
                 ch = UNI_LSQUO;
         }
 
@@ -932,7 +942,7 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
 
         if (ch == '"')
         {
-            if (dwin->lines[0].len == 0 || LEFTQUOTE(dwin->lines[0].chars[dwin->lines[0].len-1]))
+            if (line->len == 0 || LEFTQUOTE(line->chars[line->len-1]))
                 ch = UNI_LDQUO;
             else
                 ch = UNI_RDQUO;
@@ -947,7 +957,7 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
             dwin->dashed ++;
             if (dwin->dashed == 2)
             {
-                dwin->lines[0].len--;
+                line->len--;
                 if (gli_conf_dashes == 2)
                     ch = UNI_NDASH;
                 else
@@ -955,7 +965,7 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
             }
             if (dwin->dashed == 3)
             {
-                dwin->lines[0].len--;
+                line->len--;
                 ch = UNI_MDASH;
                 dwin->dashed = 0;
             }
@@ -1001,39 +1011,40 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
         }
     }
 
-    dwin->lines[0].chars[dwin->lines[0].len] = ch;
-    dwin->lines[0].attrs[dwin->lines[0].len] = win->attr;
-    dwin->lines[0].len++;
+    line->chars[line->len] = ch;
+    line->attrs[line->len] = win->attr;
+    line->len++;
 
     /* kill spaces at the end for line width calculation */
-    linelen = dwin->lines[0].len;
-    while (linelen > 1 && dwin->lines[0].chars[linelen-1] == ' '
-        && dwin->styles[dwin->lines[0].attrs[linelen-1].style].bg == color
-        && !dwin->styles[dwin->lines[0].attrs[linelen-1].style].reverse)
+    linelen = line->len;
+    while (linelen > 1 && line->chars[linelen-1] == ' '
+        && dwin->styles[line->attrs[linelen-1].style].bg == color
+        && !dwin->styles[line->attrs[linelen-1].style].reverse)
         linelen --;
 
-    if (calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs, 0, linelen, -1) >= pw)
+    if (calcwidth(dwin, line->chars, line->attrs, 0, linelen, -1) >= pw)
     {
-        bpoint = dwin->lines[0].len;
+        bpoint = line->len;
 
-        for (i = dwin->lines[0].len - 1; i > 0; i--)
-            if (dwin->lines[0].chars[i] == ' ')
+        for (i = line->len - 1; i > 0; i--)
+            if (line->chars[i] == ' ')
             {
                 bpoint = i + 1; /* skip space */
                 break;
             }
 
-        saved = dwin->lines[0].len - bpoint;
+        saved = line->len - bpoint;
 
-        memcpy(bchars, dwin->lines[0].chars + bpoint, saved * 4);
-        memcpy(battrs, dwin->lines[0].attrs + bpoint, saved * sizeof(attr_t));
-        dwin->lines[0].len = bpoint;
+        memcpy(bchars, line->chars + bpoint, saved * 4);
+        memcpy(battrs, line->attrs + bpoint, saved * sizeof(attr_t));
+        line->len = bpoint;
 
         scrolloneline(dwin, 0);
+        line = &dwin->lines[0];
 
-        memcpy(dwin->lines[0].chars, bchars, saved * 4);
-        memcpy(dwin->lines[0].attrs, battrs, saved * sizeof(attr_t));
-        dwin->lines[0].len = saved;
+        memcpy(line->chars, bchars, saved * 4);
+        memcpy(line->attrs, battrs, saved * sizeof(attr_t));
+        line->len = saved;
     }
 
     touch(dwin, 0);
@@ -1042,9 +1053,10 @@ void win_textbuffer_putchar_uni(window_t *win, glui32 ch)
 int win_textbuffer_unputchar_uni(window_t *win, glui32 ch)
 {
     window_textbuffer_t *dwin = win->data;
-    if (dwin->lines[0].len > 0 && dwin->lines[0].chars[dwin->lines[0].len - 1] == ch)
+    tbline_t *line = &dwin->lines[0];
+    if (line->len > 0 && line->chars[line->len - 1] == ch)
     {
-        dwin->lines[0].len--;
+        line->len--;
         touch(dwin, 0);
         return TRUE;
     }
@@ -1100,7 +1112,8 @@ void win_textbuffer_init_line(window_t *win, char *buf, int maxlen, int initlen)
     /* make sure we have some space left for typing... */
     pw = (win->bbox.x1 - win->bbox.x0 - gli_tmarginx * 2) * GLI_SUBPIX;
     pw = pw - 2 * SLOP - dwin->radjw + dwin->ladjw;
-    if (calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs, 0, dwin->lines[0].len, -1) >= pw * 3 / 4)
+    if (calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs,
+            0, dwin->lines[0].len, -1) >= pw * 3 / 4)
         win_textbuffer_putchar_uni(win, '\n');
 
     //dwin->lastseen = 0;
@@ -1155,7 +1168,8 @@ void win_textbuffer_init_line_uni(window_t *win, glui32 *buf, int maxlen, int in
     /* make sure we have some space left for typing... */
     pw = (win->bbox.x1 - win->bbox.x0 - gli_tmarginx * 2) * GLI_SUBPIX;
     pw = pw - 2 * SLOP - dwin->radjw + dwin->ladjw;
-    if (calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs, 0, dwin->lines[0].len, -1) >= pw * 3 / 4)
+    if (calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs,
+            0, dwin->lines[0].len, -1) >= pw * 3 / 4)
         win_textbuffer_putchar_uni(win, '\n');
 
     //dwin->lastseen = 0;
@@ -1380,10 +1394,10 @@ static void acceptline(window_t *win, glui32 keycode)
 
     len = dwin->lines[0].len - dwin->infence;
     if (win->echostr)
-        gli_stream_echo_line_uni(win->echostr, dwin->lines[0].chars+dwin->infence, len);
+        gli_stream_echo_line_uni(win->echostr, dwin->lines[0].chars + dwin->infence, len);
 
 #ifdef USETTS
-    gli_speak_tts(dwin->lines[0].chars+dwin->infence, len, 1);
+    gli_speak_tts(dwin->lines[0].chars + dwin->infence, len, 1);
 #endif
 
     /* Store in history. */
@@ -1635,31 +1649,33 @@ void gcmd_buffer_accept_readline(window_t *win, glui32 arg)
 static glui32
 put_picture(window_textbuffer_t *dwin, picture_t *pic, glui32 align, glui32 linkval)
 {
+    tbline_t *line = &dwin->lines[0];
+
     if (align == imagealign_MarginRight)
     {
-        if (dwin->lines[0].rpic || dwin->lines[0].len)
+        if (line->rpic || line->len)
             return FALSE;
 
         dwin->radjw = (pic->w + gli_tmarginx) * GLI_SUBPIX;
         dwin->radjn = (pic->h + gli_cellh - 1) / gli_cellh;
-        dwin->lines[0].rpic = pic;
-        dwin->lines[0].rm = dwin->radjw;
-        dwin->lines[0].rhyper = linkval;
+        line->rpic = pic;
+        line->rm = dwin->radjw;
+        line->rhyper = linkval;
     }
 
     else
     {
-        if (align != imagealign_MarginLeft && dwin->lines[0].len)
+        if (align != imagealign_MarginLeft && line->len)
             win_textbuffer_putchar_uni(dwin->owner, '\n');
 
-        if (dwin->lines[0].lpic || dwin->lines[0].len)
+        if (line->lpic || line->len)
             return FALSE;
 
         dwin->ladjw = (pic->w + gli_tmarginx) * GLI_SUBPIX;
         dwin->ladjn = (pic->h + gli_cellh - 1) / gli_cellh;
-        dwin->lines[0].lpic = pic;
-        dwin->lines[0].lm = dwin->ladjw;
-        dwin->lines[0].lhyper = linkval;
+        line->lpic = pic;
+        line->lm = dwin->ladjw;
+        line->lhyper = linkval;
 
         if (align != imagealign_MarginLeft)
             win_textbuffer_flow_break(dwin);
