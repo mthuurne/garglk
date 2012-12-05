@@ -56,10 +56,10 @@ static void touchscroll(window_textbuffer_t *dwin)
 {
     window_t *win = dwin->owner;
     int i;
-    gli_clear_selection();
-    winrepaint(win->bbox.x0, win->bbox.y0, win->bbox.x1, win->bbox.y1);
     for (i = 0; i < dwin->scrollmax; i++)
         dwin->lines[i].dirty = 1;
+    gli_clear_selection();
+    winrepaint(win->bbox.x0, win->bbox.y0, win->bbox.x1, win->bbox.y1);
 }
 
 static void clear_line(tbline_t *line)
