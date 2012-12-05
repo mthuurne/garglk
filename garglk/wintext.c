@@ -1078,8 +1078,7 @@ void win_textbuffer_clear(window_t *win)
     dwin->scrollpos = 0;
     dwin->scrollmax = 0;
 
-    for (i = 0; i < dwin->height; i++)
-        touch(dwin, i);
+    touchscroll(dwin);
 
     /* only need this because redraw won't touch lines below line 0,
      * and we scroll text up to top of window if it's too short. */
