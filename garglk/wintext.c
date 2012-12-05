@@ -107,8 +107,6 @@ window_textbuffer_t *win_textbuffer_create(window_t *win)
         dwin->lines[i].rhyper = 0;
         dwin->lines[i].len = 0;
         dwin->lines[i].newline = 0;
-        memset(dwin->lines[i].chars, ' ', sizeof dwin->lines[i].chars);
-        memset(dwin->lines[i].attrs,   0, sizeof dwin->lines[i].attrs);
     }
 
     memcpy(dwin->styles, gli_tstyles, sizeof gli_tstyles);
@@ -769,8 +767,6 @@ static void scrollresize(window_textbuffer_t *dwin)
         dwin->lines[i].rhyper = 0;
         dwin->lines[i].len = 0;
         dwin->lines[i].newline = 0;
-        memset(dwin->lines[i].chars, ' ', sizeof dwin->lines[i].chars);
-        memset(dwin->lines[i].attrs,   0, sizeof dwin->lines[i].attrs);
     }
 
     dwin->scrollback += SCROLLBACK;
@@ -821,8 +817,6 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
     dwin->lines[0].rpic = NULL;
     dwin->lines[0].lhyper = 0;
     dwin->lines[0].rhyper = 0;
-    memset(dwin->lines[0].chars, ' ', TBLINELEN * 4);
-    memset(dwin->lines[0].attrs, 0, TBLINELEN * sizeof(attr_t));
 
     touchscroll(dwin);
 }
