@@ -832,11 +832,7 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
     dwin->lines[0].newline = forced;
 
     for (i = dwin->scrollback - 1; i > 0; i--)
-    {
         memcpy(dwin->lines+i, dwin->lines+i-1, sizeof(tbline_t));
-        if (i < dwin->height)
-            touch(dwin, i);
-    }
 
     if (dwin->radjn)
         dwin->radjn--;
@@ -847,7 +843,6 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
     if (dwin->ladjn == 0)
         dwin->ladjw = 0;
 
-    touch(dwin, 0);
     dwin->lines[0].len = 0;
     dwin->lines[0].newline = 0;
     dwin->lines[0].lm = dwin->ladjw;
