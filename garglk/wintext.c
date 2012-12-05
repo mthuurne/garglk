@@ -21,6 +21,7 @@
  *                                                                            *
  *****************************************************************************/
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -533,10 +534,10 @@ void win_textbuffer_redraw(window_t *win)
                 color);
 
         x = x0 + SLOP + ln->lm;
-        a = 0;
-        for (b = 0; b < linelen; b++)
+        for (a = 0, b = 1; b <= linelen; b++)
         {
-            if (!attrequal(&ln->attrs[a], &ln->attrs[b]))
+            assert(a < b);
+            if (b == linelen || !attrequal(&ln->attrs[a], &ln->attrs[b]))
             {
                 link = ln->attrs[a].hyper;
                 font = attrfont(dwin->styles, &ln->attrs[a]);
@@ -558,22 +559,6 @@ void win_textbuffer_redraw(window_t *win)
                 a = b;
             }
         }
-        link = ln->attrs[a].hyper;
-        font = attrfont(dwin->styles, &ln->attrs[a]);
-        color = attrbg(dwin->styles, &ln->attrs[a]);
-        w = gli_string_width_uni(font, ln->chars + a, b - a, spw);
-        gli_draw_rect(x/GLI_SUBPIX, y, w/GLI_SUBPIX,
-                gli_leading, color);
-        if (link)
-        {
-            gli_draw_rect(x/GLI_SUBPIX + 1, y + gli_baseline + 1,
-                    w/GLI_SUBPIX + 1, gli_link_style,
-                    gli_link_color);
-            gli_put_hyperlink(link, x/GLI_SUBPIX, y,
-                    x/GLI_SUBPIX + w/GLI_SUBPIX,
-                    y + gli_leading);
-        }
-        x += w;
 
         color = gli_override_bg_set ? gli_window_color : win->bgcolor;
         gli_draw_rect(x/GLI_SUBPIX, y,
@@ -596,10 +581,10 @@ void win_textbuffer_redraw(window_t *win)
          */
 
         x = x0 + SLOP + ln->lm;
-        a = 0;
-        for (b = 0; b < linelen; b++)
+        for (a = 0, b = 1; b <= linelen; b++)
         {
-            if (!attrequal(&ln->attrs[a], &ln->attrs[b]))
+            assert(a < b);
+            if (b == linelen || !attrequal(&ln->attrs[a], &ln->attrs[b]))
             {
                 link = ln->attrs[a].hyper;
                 font = attrfont(dwin->styles, &ln->attrs[a]);
@@ -609,11 +594,6 @@ void win_textbuffer_redraw(window_t *win)
                 a = b;
             }
         }
-        link = ln->attrs[a].hyper;
-        font = attrfont(dwin->styles, &ln->attrs[a]);
-        color = link ? gli_link_color : attrfg(dwin->styles, &ln->attrs[a]);
-        gli_draw_string_uni(x, y + gli_baseline,
-                font, color, ln->chars + a, linelen - a, spw);
     }
 
     /*
