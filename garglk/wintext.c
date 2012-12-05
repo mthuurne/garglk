@@ -646,40 +646,40 @@ void win_textbuffer_redraw(window_t *win)
      */
     for (i = 0; i < dwin->scrollback; i++)
     {
-        memcpy(ln, dwin->lines + i, sizeof(tbline_t));
+        tbline_t *line = &dwin->lines[i];
 
         y = y0 + (dwin->height - (i - dwin->scrollpos) - 1) * gli_leading;
 
-        if (ln->lpic)
+        if (line->lpic)
         {
-            if (y < y1 && y + ln->lpic->h > y0)
+            if (y < y1 && y + line->lpic->h > y0)
             {
-                gli_draw_picture(ln->lpic,
+                gli_draw_picture(line->lpic,
                         x0/GLI_SUBPIX, y,
                         x0/GLI_SUBPIX, y0, x1/GLI_SUBPIX, y1);
-                link = ln->lhyper;
+                link = line->lhyper;
                 hy0 = y > y0 ? y : y0;
-                hy1 = y + ln->lpic->h < y1 ? y + ln->lpic->h : y1;
+                hy1 = y + line->lpic->h < y1 ? y + line->lpic->h : y1;
                 hx0 = x0/GLI_SUBPIX;
-                hx1 = x0/GLI_SUBPIX + ln->lpic->w < x1/GLI_SUBPIX
-                            ? x0/GLI_SUBPIX + ln->lpic->w
+                hx1 = x0/GLI_SUBPIX + line->lpic->w < x1/GLI_SUBPIX
+                            ? x0/GLI_SUBPIX + line->lpic->w
                             : x1/GLI_SUBPIX;
                 gli_put_hyperlink(link, hx0, hy0, hx1, hy1);
             }
         }
 
-        if (ln->rpic)
+        if (line->rpic)
         {
-            if (y < y1 && y + ln->rpic->h > y0)
+            if (y < y1 && y + line->rpic->h > y0)
             {
-                gli_draw_picture(ln->rpic,
-                        x1/GLI_SUBPIX - ln->rpic->w, y,
+                gli_draw_picture(line->rpic,
+                        x1/GLI_SUBPIX - line->rpic->w, y,
                         x0/GLI_SUBPIX, y0, x1/GLI_SUBPIX, y1);
-                link = ln->rhyper;
+                link = line->rhyper;
                 hy0 = y > y0 ? y : y0;
-                hy1 = y + ln->rpic->h < y1 ? y + ln->rpic->h : y1;
-                hx0 = x1/GLI_SUBPIX - ln->rpic->w > x0/GLI_SUBPIX
-                            ? x1/GLI_SUBPIX - ln->rpic->w
+                hy1 = y + line->rpic->h < y1 ? y + line->rpic->h : y1;
+                hx0 = x1/GLI_SUBPIX - line->rpic->w > x0/GLI_SUBPIX
+                            ? x1/GLI_SUBPIX - line->rpic->w
                             : x0/GLI_SUBPIX;
                 hx1 = x1/GLI_SUBPIX;
                 gli_put_hyperlink(link, hx0, hy0, hx1, hy1);
