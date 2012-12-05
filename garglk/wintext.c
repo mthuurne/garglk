@@ -62,6 +62,20 @@ static void touchscroll(window_textbuffer_t *dwin)
         dwin->lines[i].dirty = 1;
 }
 
+static void clear_line(tbline_t *line)
+{
+    line->dirty = 0;
+    line->repaint = 0;
+    line->lm = 0;
+    line->rm = 0;
+    line->lpic = NULL;
+    line->rpic = NULL;
+    line->lhyper = 0;
+    line->rhyper = 0;
+    line->len = 0;
+    line->newline = 0;
+}
+
 window_textbuffer_t *win_textbuffer_create(window_t *win)
 {
     window_textbuffer_t *dwin = malloc(sizeof(window_textbuffer_t));
@@ -96,18 +110,7 @@ window_textbuffer_t *win_textbuffer_create(window_t *win)
     dwin->dashed = 0;
 
     for (i = 0; i < dwin->scrollback; i++)
-    {
-        dwin->lines[i].dirty = 0;
-        dwin->lines[i].repaint = 0;
-        dwin->lines[i].lm = 0;
-        dwin->lines[i].rm = 0;
-        dwin->lines[i].lpic = 0;
-        dwin->lines[i].rpic = 0;
-        dwin->lines[i].lhyper = 0;
-        dwin->lines[i].rhyper = 0;
-        dwin->lines[i].len = 0;
-        dwin->lines[i].newline = 0;
-    }
+        clear_line(&dwin->lines[i]);
 
     memcpy(dwin->styles, gli_tstyles, sizeof gli_tstyles);
 
@@ -756,18 +759,7 @@ static void scrollresize(window_textbuffer_t *dwin)
     dwin->lines = newlines;
 
     for (i = dwin->scrollback; i < (dwin->scrollback + SCROLLBACK); i++)
-    {
-        dwin->lines[i].dirty = 0;
-        dwin->lines[i].repaint = 0;
-        dwin->lines[i].lm = 0;
-        dwin->lines[i].rm = 0;
-        dwin->lines[i].lpic = 0;
-        dwin->lines[i].rpic = 0;
-        dwin->lines[i].lhyper = 0;
-        dwin->lines[i].rhyper = 0;
-        dwin->lines[i].len = 0;
-        dwin->lines[i].newline = 0;
-    }
+        clear_line(&dwin->lines[i]);
 
     dwin->scrollback += SCROLLBACK;
 }
@@ -809,14 +801,9 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
     if (dwin->ladjn == 0)
         dwin->ladjw = 0;
 
-    dwin->lines[0].len = 0;
-    dwin->lines[0].newline = 0;
+    clear_line(&dwin->lines[0]);
     dwin->lines[0].lm = dwin->ladjw;
     dwin->lines[0].rm = dwin->radjw;
-    dwin->lines[0].lpic = NULL;
-    dwin->lines[0].rpic = NULL;
-    dwin->lines[0].lhyper = 0;
-    dwin->lines[0].rhyper = 0;
 
     touchscroll(dwin);
 }
@@ -1083,16 +1070,8 @@ void win_textbuffer_clear(window_t *win)
 
     for (i = 0; i < dwin->scrollback; i++)
     {
-        dwin->lines[i].len = 0;
-        dwin->lines[i].lpic = 0;
-        dwin->lines[i].rpic = 0;
-        dwin->lines[i].lhyper = 0;
-        dwin->lines[i].rhyper = 0;
-        dwin->lines[i].lm = 0;
-        dwin->lines[i].rm = 0;
-        dwin->lines[i].newline = 0;
+        clear_line(&dwin->lines[i]);
         dwin->lines[i].dirty = 1;
-        dwin->lines[i].repaint = 0;
     }
 
     dwin->lastseen = 0;
