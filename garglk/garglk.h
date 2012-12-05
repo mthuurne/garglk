@@ -481,7 +481,7 @@ struct window_textbuffer_s
     int spaced;
     int dashed;
 
-    tbline_t *lines;
+    tbline_t **lines;
     int scrollback;
 
     /* adjust margins temporarily for images */

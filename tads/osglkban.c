@@ -538,7 +538,7 @@ void os_banner_size_to_contents(void *banner_handle)
         winid_t win = banner->win;
         window_textbuffer_t *dwin = win->data;
         int size = dwin->scrollmax;
-        if (dwin->lines[0].len)
+        if (dwin->lines[0]->len)
             size ++;
         os_banner_set_size(banner, size, OS_BANNER_SIZE_ABS, 0);
     }
