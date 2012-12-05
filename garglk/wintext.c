@@ -792,6 +792,7 @@ static void scrollresize(window_textbuffer_t *dwin)
 
 static void scrolloneline(window_textbuffer_t *dwin, int forced)
 {
+    tbline_t *wrappedline;
     int i;
 
     dwin->lastseen ++;
@@ -815,8 +816,10 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
 
     dwin->lines[0]->newline = forced;
 
-    for (i = dwin->scrollback - 1; i > 0; i--)
-        memcpy(dwin->lines[i], dwin->lines[i - 1], sizeof(tbline_t));
+    wrappedline = dwin->lines[dwin->scrollback - 1];
+    memmove(&dwin->lines[1], &dwin->lines[0],
+            (dwin->scrollback - 1) * sizeof(tbline_t *));
+    dwin->lines[0] = wrappedline;
 
     if (dwin->radjn)
         dwin->radjn--;
@@ -827,9 +830,9 @@ static void scrolloneline(window_textbuffer_t *dwin, int forced)
     if (dwin->ladjn == 0)
         dwin->ladjw = 0;
 
-    clear_line(dwin->lines[0]);
-    dwin->lines[0]->lm = dwin->ladjw;
-    dwin->lines[0]->rm = dwin->radjw;
+    clear_line(wrappedline);
+    wrappedline->lm = dwin->ladjw;
+    wrappedline->rm = dwin->radjw;
 
     touchscroll(dwin);
 }
