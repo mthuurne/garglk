@@ -394,7 +394,7 @@ void banner_contents_display(contentid_t contents)
         char ch = '\n';
         os_put_buffer(&ch, 1);
     }
-    
+
     if (len && (contents->chars[len-1] == '\n'))
     {
         len --;
@@ -538,7 +538,7 @@ void os_banner_size_to_contents(void *banner_handle)
         winid_t win = banner->win;
         window_textbuffer_t *dwin = win->data;
         int size = dwin->scrollmax;
-        if (dwin->numchars)
+        if (dwin->lines[0].len)
             size ++;
         os_banner_set_size(banner, size, OS_BANNER_SIZE_ABS, 0);
     }

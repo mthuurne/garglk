@@ -484,10 +484,6 @@ struct window_textbuffer_s
     tbline_t *lines;
     int scrollback;
 
-    int numchars;		/* number of chars in last line: lines[0] */
-    glui32 *chars;		/* alias to lines[0].chars */
-    attr_t *attrs;		/* alias to lines[0].attrs */
-
     /* adjust margins temporarily for images */
     int ladjw;
     int ladjn;
