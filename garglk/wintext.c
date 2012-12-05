@@ -1079,13 +1079,6 @@ void win_textbuffer_clear(window_t *win)
     dwin->scrollmax = 0;
 
     touchscroll(dwin);
-
-    /* only need this because redraw won't touch lines below line 0,
-     * and we scroll text up to top of window if it's too short. */
-//    gli_draw_rect(win->bbox.x0, win->bbox.y0,
-//            win->bbox.x1 - win->bbox.x0,
-//            win->bbox.y1 - win->bbox.y0,
-//            gli_window_color);
 }
 
 /* Prepare the window for line input. */
