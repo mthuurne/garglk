@@ -340,7 +340,7 @@ static int calcwidth(window_textbuffer_t *dwin,
 void win_textbuffer_redraw(window_t *win)
 {
     window_textbuffer_t *dwin = win->data;
-    tbline_t *ln;
+    attr_t *attrbuf = NULL;
     int linelen;
     int nsp, spw, pw;
     int x0, y0, x1, y1;
@@ -353,10 +353,6 @@ void win_textbuffer_redraw(window_t *win)
     int hx0, hx1, hy0, hy1;
     int selbuf, selrow, selchar, sx0, sx1, selleft, selright;
     int tx, tsc, tsw, lsc, rsc;
-
-    ln = malloc(sizeof(tbline_t));
-    if (!ln)
-        return;
 
     x0 = (win->bbox.x0 + gli_tmarginx) * GLI_SUBPIX;
     x1 = (win->bbox.x1 - gli_tmarginx - gli_scroll_width) * GLI_SUBPIX;
@@ -374,6 +370,7 @@ void win_textbuffer_redraw(window_t *win)
     for (i = dwin->scrollpos + dwin->height - 1; i >= dwin->scrollpos; i--)
     {
         tbline_t *line = &dwin->lines[i];
+        attr_t *attrs = line->attrs;
 
         /* top of line */
         y = y0 + (dwin->height - (i - dwin->scrollpos) - 1) * gli_leading;
@@ -396,14 +393,13 @@ void win_textbuffer_redraw(window_t *win)
         if (selrow)
             line->dirty = TRUE;
 
-        memcpy(ln, line, sizeof(tbline_t));
-
         /* skip if we can */
-        if (!ln->dirty && !ln->repaint && !gli_force_redraw && dwin->scrollpos == 0)
+        if (!line->dirty && !line->repaint
+                && !gli_force_redraw && dwin->scrollpos == 0)
             continue;
 
         /* repaint previously selected lines if needed */
-        if (ln->repaint && !gli_force_redraw)
+        if (line->repaint && !gli_force_redraw)
             gli_redraw_rect(x0/GLI_SUBPIX, y, x1/GLI_SUBPIX, y + gli_leading);
 
         /* keep selected line dirty and flag for repaint */
@@ -421,30 +417,30 @@ void win_textbuffer_redraw(window_t *win)
         if (i == dwin->scrollpos && i > 0)
             continue;
 
-        linelen = ln->len;
+        linelen = line->len;
 
         /* kill spaces at the end unless they're a different color*/
         color = gli_override_bg_set ? gli_window_color : win->bgcolor;
-        while (i > 0 && linelen > 1 && ln->chars[linelen-1] == ' '
-            && dwin->styles[ln->attrs[linelen-1].style].bg == color
-            && !dwin->styles[ln->attrs[linelen-1].style].reverse)
+        while (i > 0 && linelen > 1 && line->chars[linelen-1] == ' '
+            && dwin->styles[attrs[linelen-1].style].bg == color
+            && !dwin->styles[attrs[linelen-1].style].reverse)
                 linelen --;
 
         /* kill characters that would overwrite the scroll bar */
-        while (linelen > 1 && calcwidth(dwin, ln->chars, ln->attrs, 0, linelen, -1) >= pw)
+        while (linelen > 1 && calcwidth(dwin, line->chars, attrs, 0, linelen, -1) >= pw)
             linelen --;
 
         /*
          * count spaces and width for justification
          */
-        if (gli_conf_justify && !ln->newline && i > 0)
+        if (gli_conf_justify && !line->newline && i > 0)
         {
             for (a = 0, nsp = 0; a < linelen; a++)
-                if (ln->chars[a] == ' ')
+                if (line->chars[a] == ' ')
                     nsp ++;
-            w = calcwidth(dwin, ln->chars, ln->attrs, 0, linelen, 0);
+            w = calcwidth(dwin, line->chars, attrs, 0, linelen, 0);
             if (nsp)
-                spw = (x1 - x0 - ln->lm - ln->rm - 2 * SLOP - w) / nsp;
+                spw = (x1 - x0 - line->lm - line->rm - 2 * SLOP - w) / nsp;
             else
                 spw = 0;
         }
@@ -463,7 +459,7 @@ void win_textbuffer_redraw(window_t *win)
             if (selleft && selright)
             {
                 rsc = linelen > 0 ? linelen - 1 : 0;
-                selchar = calcwidth(dwin, ln->chars, ln->attrs, lsc, rsc, spw)/GLI_SUBPIX;
+                selchar = calcwidth(dwin, line->chars, attrs, lsc, rsc, spw)/GLI_SUBPIX;
             }
             else
             {
@@ -471,18 +467,18 @@ void win_textbuffer_redraw(window_t *win)
                 if (selleft)
                 {
                     tsc = linelen > 0 ? linelen - 1 : 0;
-                    selchar = calcwidth(dwin, ln->chars, ln->attrs, lsc, tsc, spw)/GLI_SUBPIX;
+                    selchar = calcwidth(dwin, line->chars, attrs, lsc, tsc, spw)/GLI_SUBPIX;
                 }
                 else
                 {
                     /* find the substring contained by the selection */
-                    tx = (x0 + SLOP + ln->lm)/GLI_SUBPIX;
+                    tx = (x0 + SLOP + line->lm) / GLI_SUBPIX;
                     /* measure string widths until we find left char */
                     for (tsc = 0; tsc < linelen; tsc++)
                     {
-                        tsw = calcwidth(dwin, ln->chars, ln->attrs, 0, tsc, spw)/GLI_SUBPIX;
+                        tsw = calcwidth(dwin, line->chars, attrs, 0, tsc, spw)/GLI_SUBPIX;
                         if (tsw + tx >= sx0 ||
-                                tsw + tx + GLI_SUBPIX >= sx0 && ln->chars[tsc] != ' ')
+                                tsw + tx + GLI_SUBPIX >= sx0 && line->chars[tsc] != ' ')
                         {
                             lsc = tsc;
                             selchar = TRUE;
@@ -502,7 +498,7 @@ void win_textbuffer_redraw(window_t *win)
                     /* measure string widths until we find right char */
                         for (tsc = lsc; tsc < linelen; tsc++)
                         {
-                            tsw = calcwidth(dwin, ln->chars, ln->attrs, lsc, tsc, spw)/GLI_SUBPIX;
+                            tsw = calcwidth(dwin, line->chars, attrs, lsc, tsc, spw)/GLI_SUBPIX;
                             if (tsw + sx0 < sx1)
                                 rsc = tsc;
                         }
@@ -514,10 +510,22 @@ void win_textbuffer_redraw(window_t *win)
             /* reverse colors for selected chars */
             if (selchar)
             {
+                /*
+                 * allocate a buffer in which the attributes can be modified;
+                 * the buffer will be re-used when multiple lines are selected,
+                 * so make it large enough for any line to fit
+                 */
+                if (!attrbuf)
+                    attrbuf = malloc(TBLINELEN * sizeof(attr_t));
+                if (!attrbuf)
+                    continue;
+                memcpy(attrbuf, attrs, line->len * sizeof(attr_t));
+                attrs = attrbuf;
+
                 for (tsc = lsc; tsc <= rsc; tsc++)
                 {
-                    ln->attrs[tsc].reverse = !ln->attrs[tsc].reverse;
-                    dwin->copybuf[dwin->copypos] = ln->chars[tsc];
+                    attrs[tsc].reverse = !attrs[tsc].reverse;
+                    dwin->copybuf[dwin->copypos] = line->chars[tsc];
                     dwin->copypos++;
                 }
             }
@@ -538,16 +546,16 @@ void win_textbuffer_redraw(window_t *win)
                 (x1-x0) / GLI_SUBPIX, gli_leading,
                 color);
 
-        x = x0 + SLOP + ln->lm;
+        x = x0 + SLOP + line->lm;
         for (a = 0, b = 1; b <= linelen; b++)
         {
             assert(a < b);
-            if (b == linelen || !attrequal(&ln->attrs[a], &ln->attrs[b]))
+            if (b == linelen || !attrequal(&attrs[a], &attrs[b]))
             {
-                link = ln->attrs[a].hyper;
-                font = attrfont(dwin->styles, &ln->attrs[a]);
-                color = attrbg(dwin->styles, &ln->attrs[a]);
-                w = gli_string_width_uni(font, ln->chars + a, b - a, spw);
+                link = attrs[a].hyper;
+                font = attrfont(dwin->styles, &attrs[a]);
+                color = attrbg(dwin->styles, &attrs[a]);
+                w = gli_string_width_uni(font, line->chars + a, b - a, spw);
                 gli_draw_rect(x/GLI_SUBPIX, y,
                         w/GLI_SUBPIX, gli_leading,
                         color);
@@ -578,24 +586,24 @@ void win_textbuffer_redraw(window_t *win)
         {
             w = calcwidth(dwin, dwin->lines[0].chars, dwin->lines[0].attrs, 0, dwin->incurs, spw);
             if (w < pw - gli_caret_shape * 2 * GLI_SUBPIX)
-                gli_draw_caret(x0 + SLOP + ln->lm + w, y + gli_baseline);
+                gli_draw_caret(x0 + SLOP + line->lm + w, y + gli_baseline);
         }
 
         /*
          * draw text
          */
 
-        x = x0 + SLOP + ln->lm;
+        x = x0 + SLOP + line->lm;
         for (a = 0, b = 1; b <= linelen; b++)
         {
             assert(a < b);
-            if (b == linelen || !attrequal(&ln->attrs[a], &ln->attrs[b]))
+            if (b == linelen || !attrequal(&attrs[a], &attrs[b]))
             {
-                link = ln->attrs[a].hyper;
-                font = attrfont(dwin->styles, &ln->attrs[a]);
-                color = link ? gli_link_color : attrfg(dwin->styles, &ln->attrs[a]);
+                link = attrs[a].hyper;
+                font = attrfont(dwin->styles, &attrs[a]);
+                color = link ? gli_link_color : attrfg(dwin->styles, &attrs[a]);
                 x = gli_draw_string_uni(x, y + gli_baseline,
-                        font, color, ln->chars + a, b - a, spw);
+                        font, color, line->chars + a, b - a, spw);
                 a = b;
             }
         }
@@ -748,7 +756,7 @@ void win_textbuffer_redraw(window_t *win)
     if (!dwin->owner->more_request)
         dwin->lastseen = 0;
 
-    free(ln);
+    free(attrbuf);
 }
 
 static void scrollresize(window_textbuffer_t *dwin)
