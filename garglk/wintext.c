@@ -47,7 +47,7 @@ static void touch(window_textbuffer_t *dwin, int line)
     int y = win->bbox.y0 + gli_tmarginy + (dwin->height - line - 1) * gli_leading;
 //    if (dwin->scrollmax && dwin->scrollmax < dwin->height)
 //        y -= (dwin->height - dwin->scrollmax) * gli_leading;
-    dwin->lines[line].dirty = 1;
+    dwin->lines[line].dirty = TRUE;
     gli_clear_selection();
     winrepaint(win->bbox.x0, y - 2, win->bbox.x1, y + gli_leading + 2);
 }
@@ -57,15 +57,15 @@ static void touchscroll(window_textbuffer_t *dwin)
     window_t *win = dwin->owner;
     int i;
     for (i = 0; i < dwin->scrollmax; i++)
-        dwin->lines[i].dirty = 1;
+        dwin->lines[i].dirty = TRUE;
     gli_clear_selection();
     winrepaint(win->bbox.x0, win->bbox.y0, win->bbox.x1, win->bbox.y1);
 }
 
 static void clear_line(tbline_t *line)
 {
-    line->dirty = 0;
-    line->repaint = 0;
+    line->dirty = FALSE;
+    line->repaint = FALSE;
     line->lm = 0;
     line->rm = 0;
     line->lpic = NULL;
@@ -1091,7 +1091,7 @@ void win_textbuffer_clear(window_t *win)
     for (i = 0; i < dwin->scrollback; i++)
     {
         clear_line(&dwin->lines[i]);
-        dwin->lines[i].dirty = 1;
+        dwin->lines[i].dirty = TRUE;
     }
 
     dwin->lastseen = 0;
